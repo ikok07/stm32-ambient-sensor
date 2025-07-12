@@ -10,7 +10,6 @@
 
 #include "gpio_driver.h"
 #include "usart_driver.h"
-#include "gpios.h"
 
 int __io_putchar(int ch) {
     USART_PeripheralTXControl(system_handles.pUSARTHandle, ENABLE);
@@ -18,6 +17,23 @@ int __io_putchar(int ch) {
     USART_PeripheralTXControl(system_handles.pUSARTHandle, DISABLE);
     return ch;
 };
+
+/**
+ * @brief Initializes the GPIO for the error LED
+ */
+void InitErrorLED() {
+    GPIO_PinConfig_t config = {
+        .GPIO_PinNumber = ERR_LED_PIN,
+        .GPIO_PinSpeed = GPIO_SpeedMedium,
+        .GPIO_PinOPType = GPIO_OpTypePP,
+        .GPIO_PinPuPdControl = GPIO_Pu,
+        .GPIO_PinMode = GPIO_ModeOutput,
+    };
+
+    system_handles.pGPIOHandle->pGPIOx = ERR_LED_PORT;
+    system_handles.pGPIOHandle->GPIO_PinConfig = config;
+    GPIO_Init(system_handles.pGPIOHandle);
+}
 
 /**
  * @brief Enables the error LED and transmits error message via USART
@@ -41,5 +57,5 @@ void ClearActiveError() {
     GPIO_WriteToOutputPin(ERR_LED_PORT, ERR_LED_PIN, DISABLE);
 
     // Send message
-    printf("Error cleared! Program continuing...");
+    printf("Error cleared! Program continuing...\n");
 }

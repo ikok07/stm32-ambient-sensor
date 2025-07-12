@@ -7,6 +7,7 @@
 
 #include "usart_driver.h"
 
+#define USARTx                  USART1
 #define USART_PORT              GPIOA
 #define USART_TX_PIN            9
 #define USART_RX_PIN            10
