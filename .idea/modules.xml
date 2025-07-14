@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/stm32-f401-cmake-template.iml" filepath="$PROJECT_DIR$/.idea/stm32-f401-cmake-template.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/stm32-ambient-sensor.iml" filepath="$PROJECT_DIR$/.idea/stm32-ambient-sensor.iml" />
     </modules>
   </component>
 </project>

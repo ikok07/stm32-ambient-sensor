@@ -6,28 +6,6 @@
 #include "system_config.h"
 
 /**
- * @brief GPIOS: PA1 (Main battery), PA2 (Contrast)
- */
-void InitAdcGPIOS() {
-    GPIO_PinConfig_t config = {
-        .GPIO_PinNumber = ADC_BATTERY_PIN,
-        .GPIO_PinSpeed = GPIO_SpeedMedium,
-        .GPIO_PinOPType = GPIO_OpTypePP,
-        .GPIO_PinPuPdControl = GPIO_NoPuPd,
-        .GPIO_PinMode = GPIO_ModeAnalog,
-    };
-
-    // Battery pin
-    system_handles.pGPIOHandle->pGPIOx = ADC_PORT;
-    system_handles.pGPIOHandle->GPIO_PinConfig = config;
-    GPIO_Init(system_handles.pGPIOHandle);
-
-    // Contrast pin
-    system_handles.pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber = ADC_CONTRAST_PIN;
-    GPIO_Init(system_handles.pGPIOHandle);
-}
-
-/**
  * @brief GPIOS: PA3, PA4
  */
 void InitUserBtnsGPIOS() {

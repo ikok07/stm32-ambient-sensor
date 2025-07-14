@@ -29,11 +29,8 @@
 #define SCROLL_DIR_VRIGHT                                    1
 #define SCROLL_DIR_VLEFT                                     2
 
-#define SSD1306_FONT_WIDTH                                   6
-#define SSD1306_FONT_HEIGHT                                  8
-
 #define SSD1306_MIN_WIDTH                                    0
-#define SSD1306_MAX_WIDTH                                    127
+#define SSD1306_MAX_WIDTH                                    128
 #define SSD1306_MIN_HEIGHT                                   0
 #define SSD1306_MAX_HEIGHT                                   64
 
@@ -114,15 +111,22 @@
 #define SSD1306_CMD_SET_VCOMH_DES_LVL                        0xDB
 #define SSD1306_CMD_NOOP                                     0xE3
 
+/* ************ Charge Pump Commands ************ */
+
+#define SSD1306_CMD_SET_CHARGE_PUMP                         0x8D
+
 /* ------------ ERROR CODES ------------ */
 typedef enum {
     SSD1306_ErrOK,
     SSD1306_ErrComm,
+    SSD1306_ErrI2CNotEnabled,
+    SSD1306_ErrI2CIncorrectSpeed,
     SSD1306_ErrNotInitialized,
     SSD1306_ErrInvalidArg,
     SSD1306_ErrBufferOverflow,
     SSD1306_ErrInvalidAddrMode,
-    SSD1306_ErrOutOfBounds
+    SSD1306_ErrOutOfBounds,
+    SSD1306_ErrInvalidFont
 } SSD1306_Error_e;
 
 typedef enum {
@@ -161,8 +165,7 @@ typedef enum {
 
 typedef enum {
     SSD1306_MemAddrHorizontal,
-    SSD1306_MemAddrVertical,
-    SSD1306_MemAddrPage,
+    SSD1306_MemAddrPage = 2,
 } SSD1306_MemoryAddressingMode_e;
 
 typedef enum {
@@ -170,6 +173,12 @@ typedef enum {
     SSD1306_VCOMHLevelMode1 = 2,    // ∼ 0.77 * Vcc
     SSD1306_VCOMHLevelMode2,        // ∼ 0.83 * Vcc
 } SSD1306_VCOMHDeselectLevel_e;
+
+typedef enum {
+    SSD1306_Font8x8,
+    SSD1306_Font8x16,
+    SSD1306_Font16x15,
+} SSD1306_Font_e;
 
 /* ------------ CONFIG STRUCTURES ------------ */
 
@@ -213,9 +222,11 @@ typedef struct {
 } SSD1306_TimingState_t;
 
 typedef struct {
+    uint8_t PowerEnabled;
     uint8_t Contrast;
     uint8_t DisplayInversed;
     uint8_t EntireDisplayON;
+    uint8_t ChargePumpEnabled;
     SSD1306_DisplayMode DisplayMode;
     SSD1306_ScrollState_t ScrollState;
     SSD1306_AddressingState_t AddressingState;
@@ -224,16 +235,46 @@ typedef struct {
 } SSD1306_State_t;
 
 typedef struct {
-    I2C_Handle_t *I2CHandle;
+    uint8_t MUXRatio;
+    uint8_t DisplayOffset;
+    uint8_t DisplayStartLine;
+    uint8_t SegmentsRemapped;
+    uint8_t COMScanRemapped;
+    uint8_t AlternativeCOMPinConfigEnabled;
+    uint8_t COMLeftRightRemapEnabled;
+    uint8_t Contrast;
+    uint8_t DivideRatio;
+    uint8_t OSCFreq;
+    SSD1306_Font_e Font;
+    uint8_t FontMirrored;
 } SSD1306_Config_t;
 
+/**
+ * @brief The display's VCC should be connected to a GPIO in order to be physically reset when needed
+ */
 typedef struct {
-    uint8_t DeviceInitialized;
-    SSD1306_Config_t Config;
+    GPIO_TypeDef *pGPIOx;
+    uint8_t PinNumber;
+} SSD1306_PwrGPIOConfig;
+
+typedef struct {
+    SSD1306_Font_e Font;
+    uint8_t Mirrored;
+    uint8_t Width;
+    uint8_t Height;
+} SSD1306_FontConfig_t;
+
+typedef struct {
+    I2C_Handle_t *I2CHandle;
+    SSD1306_PwrGPIOConfig PowerConfig;
+    SSD1306_FontConfig_t FontConfig;
     SSD1306_State_t DeviceState;
 } SSD1306_Handle_t;
 
 /* ------------ DATA DISPLAY METHODS ------------ */
+
+// Fonts
+SSD1306_Error_e SSD1306_SetFont(SSD1306_Handle_t *pSSD1306Handle, SSD1306_Font_e Font, uint8_t Mirrored);
 
 // Page addressing mode
 SSD1306_Error_e SSD1306_SetCursor(SSD1306_Handle_t *pSSD1306Handle, uint8_t Column, SSD1306_Page_e Page);
@@ -241,11 +282,11 @@ SSD1306_Error_e SSD1306_Write(SSD1306_Handle_t *pSSD1306Handle, char *str);
 SSD1306_Error_e SSD1306_Clear(SSD1306_Handle_t *pSSD1306Handle);
 
 // Horizontal / Vertical addressing mode
-SSD1306_Error_e SSD1306_SetWriteAreaHV(SSD1306_Handle_t *pSSD1306Handle, uint8_t xStart, uint8_t xEnd, uint8_t yStart, uint8_t yEnd);
-SSD1306_Error_e SSD1306_WriteHV(SSD1306_Handle_t *pSSD1306Handle, uint8_t x, uint8_t y, char *str);
-SSD1306_Error_e SSD1306_DrawHV(SSD1306_Handle_t *pSSD1306Handle, uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint8_t *bitmap, uint8_t len);
-SSD1306_Error_e SSD1306_ClearAreaHV(SSD1306_Handle_t *pSSD1306Handle);
-SSD1306_Error_e SSD1306_UpdateHV(SSD1306_Handle_t *pSSD1306Handle);
+SSD1306_Error_e SSD1306_SetWriteAreaH(SSD1306_Handle_t *pSSD1306Handle, uint8_t xStart, uint8_t xEnd, uint8_t yStart, uint8_t yEnd);
+SSD1306_Error_e SSD1306_WriteH(SSD1306_Handle_t *pSSD1306Handle, uint8_t x, uint8_t y, char *str);
+SSD1306_Error_e SSD1306_DrawH(SSD1306_Handle_t *pSSD1306Handle, uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint8_t *bitmap, uint8_t len);
+SSD1306_Error_e SSD1306_ClearH(SSD1306_Handle_t *pSSD1306Handle);
+SSD1306_Error_e SSD1306_UpdateH(SSD1306_Handle_t *pSSD1306Handle);
 
 
 /* ------------ COMMAND METHODS ------------ */
@@ -253,7 +294,7 @@ SSD1306_Error_e SSD1306_UpdateHV(SSD1306_Handle_t *pSSD1306Handle);
 /*
  * Init
  */
-SSD1306_Error_e SSD1306_Init(SSD1306_Handle_t *pSSD1306Handle);
+SSD1306_Error_e SSD1306_Init(SSD1306_Handle_t *pSSD1306Handle, SSD1306_Config_t Config);
 void SSD1306_DeInit(SSD1306_Handle_t *pSSD1306Handle);
 
 /*
@@ -280,8 +321,8 @@ SSD1306_Error_e SSD1306_SetPageModeColumnLowerNibble(SSD1306_Handle_t *pSSD1306H
 SSD1306_Error_e SSD1306_SetPageModeColumnHigherNibble(SSD1306_Handle_t *pSSD1306Handle, uint8_t ColHigherAddr);
 SSD1306_Error_e SSD1306_SetPageModeStartPage(SSD1306_Handle_t *pSSD1306Handle, SSD1306_Page_e Page);
 SSD1306_Error_e SSD1306_SetMemoryAddrMode(SSD1306_Handle_t *pSSD1306Handle, SSD1306_MemoryAddressingMode_e Mode);
-SSD1306_Error_e SSD1306_SetHVModeColumnAddr(SSD1306_Handle_t *pSSD1306Handle, uint8_t StartAddr, uint8_t EndAddr);
-SSD1306_Error_e SSD1306_SetHVModePageAddr(SSD1306_Handle_t *pSSD1306Handle, SSD1306_Page_e StartPage, SSD1306_Page_e EndPage);
+SSD1306_Error_e SSD1306_SetHModeColumnAddr(SSD1306_Handle_t *pSSD1306Handle, uint8_t StartAddr, uint8_t EndAddr);
+SSD1306_Error_e SSD1306_SetHModePageAddr(SSD1306_Handle_t *pSSD1306Handle, SSD1306_Page_e StartPage, SSD1306_Page_e EndPage);
 
 /*
  * Hardware Configuration
@@ -299,5 +340,15 @@ SSD1306_Error_e SSD1306_ConfigureCOMPins(SSD1306_Handle_t *pSSD1306Handle, uint8
 SSD1306_Error_e SSD1306_SetDivideRatioAndOSCFreq(SSD1306_Handle_t *pSSD1306Handle, uint8_t DivideRatio, uint8_t OSCFreq);
 SSD1306_Error_e SSD1306_SetPreChargePeriod(SSD1306_Handle_t *pSSD1306Handle, uint8_t PhaseOnePeriod, uint8_t PhaseTwoPeriod);
 SSD1306_Error_e SSD1306_SetVCOMHDeselectLevel(SSD1306_Handle_t *pSSD1306Handle, SSD1306_VCOMHDeselectLevel_e Level);
+
+/*
+ * Charge Pump
+ */
+SSD1306_Error_e SSD1306_ChargePumpControl(SSD1306_Handle_t *pSSD1306Handle, uint8_t Enabled);
+
+/**
+ * Power
+ */
+void SSD1306_PowerControl(SSD1306_Handle_t *pSSD1306Handle, uint8_t Enabled);
 
 #endif //SSD1306_I2C_DRIVER_H

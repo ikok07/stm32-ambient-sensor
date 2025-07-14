@@ -1,4 +1,5 @@
 
+#include <adc.h>
 #include <error.h>
 #include <i2c.h>
 #include <string.h>
@@ -10,6 +11,7 @@
 #include "rtc_driver.h"
 #include "usart_driver.h"
 #include "i2c_driver.h"
+#include "adc_driver.h"
 #include "bme280_i2c_driver.h"
 #include "system_config.h"
 #include "usart.h"
@@ -20,12 +22,14 @@ GPIO_Handle_t gpioHandle;
 USART_Handle_t usartHandle;
 I2C_Handle_t i2cHandle;
 BME280_Handle_t bme280Handle;
+ADC_Handle_t adcHandle;
 
 SYSTEM_Handles_t system_handles = {
     .pGPIOHandle = &gpioHandle,
     .pUSARTHandle = &usartHandle,
     .pI2CHandle = &i2cHandle,
-    .pBme280Handle = &bme280Handle
+    .pBme280Handle = &bme280Handle,
+    .pADCHandle = &adcHandle
 };
 
 /*
@@ -74,8 +78,8 @@ int main(void) {
 
     InitErrorLED();                     // Configure error LED GPIO
     ConfigureUSART_GPIOS();             // Configure USART GPIOs
+    ConfigureADC_GPIOS();               // Configure ADC GPIOs
     ConfigureI2C_GPIOS();               // Configure I2C GPIOs
-    // InitAdcGPIOS();                     // Configure ADC GPIOs
     // InitUserBtnsGPIOS();                // Configure user button GPIOs
 
     // Configure USART
@@ -84,6 +88,15 @@ int main(void) {
         TriggerError("USART could not be started!");
         goto infinite_loop;
     }
+
+    // Configure ADC
+    ADC_Error_e adcError = InitADC();
+    if (adcError != ADC_ErrOK) {
+        TriggerError("ADC could not be started!");
+        goto infinite_loop;
+    }
+
+    while (1) {};
 
     // Configure I2C
     I2C_Error_e i2cError = InitI2C();
@@ -102,4 +115,25 @@ int main(void) {
 
     infinite_loop:
     while (1);
+}
+
+void DMA2_Stream4_IRQHandler() {
+    DMA_IRQHanding(&system_handles.pADCHandle->DMAState.DMAHandle);
+}
+
+void DMA_ApplicationCallback(DMA_Handle_t *pDMAHandle, DMA_Flag_e Flag) {
+    if (Flag == DMA_FlagTransferError) {
+        TriggerError("DMA data transfer failed!");
+        while (1);
+    }
+
+    if (Flag == DMA_FlagDirectModeError) {
+        TriggerError("DMA direct mode error!");
+        while (1);
+    }
+
+    if (Flag == DMA_FlagFIFOOverrun) {
+        TriggerError("DMA FIFO overrun error!");
+        while (1);
+    }
 }

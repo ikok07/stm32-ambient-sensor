@@ -35,7 +35,7 @@ set (MFLOAT_ABI_MIX                   "Debug")
 #######################################################################
 
 ###################### VARIABLES ######################################
-set (PROJECT_NAME             "stm32f401-cmake")
+set (PROJECT_NAME             "stm32f401-ambient-sensor")
 set (PROJECT_TYPE             "exe")
 set (LINKER_SCRIPT            "../STM32F401CCUX_FLASH.ld")
 set (MCPU                     "-mcpu=Cortex-M4")
