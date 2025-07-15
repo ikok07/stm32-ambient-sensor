@@ -12,7 +12,7 @@
 BME280_Error_t InitBME280Sensor() {
     BME280_Config_t config = {
         .AddrPin = BME280_AddrPinLOW,
-        .FilterCoeff = BME280_FilterCoeffOFF,
+        .FilterCoeff = BME280_FilterCoeff16,
         .NormalModeStandbyDuration = BME280_StandbyDuration100,
         .HumidityOversampling = BME280_Oversampling1,
         .TemperatureOversampling = BME280_Oversampling1,

@@ -177,7 +177,7 @@ typedef enum {
 typedef enum {
     SSD1306_Font8x8,
     SSD1306_Font8x16,
-    SSD1306_Font16x15,
+    SSD1306_Font16x16,
 } SSD1306_Font_e;
 
 /* ------------ CONFIG STRUCTURES ------------ */
@@ -235,6 +235,7 @@ typedef struct {
 } SSD1306_State_t;
 
 typedef struct {
+    SSD1306_MemoryAddressingMode_e AddressingMode;
     uint8_t MUXRatio;
     uint8_t DisplayOffset;
     uint8_t DisplayStartLine;

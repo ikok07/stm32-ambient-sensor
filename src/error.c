@@ -13,7 +13,8 @@
 
 int __io_putchar(int ch) {
     USART_PeripheralTXControl(system_handles.pUSARTHandle, ENABLE);
-    USART_SendData(system_handles.pUSARTHandle, (uint8_t*)&ch, sizeof(ch));
+    USART_Error_e err = USART_SendData(system_handles.pUSARTHandle, (uint8_t*)&ch, sizeof(ch));
+    (void)err;
     USART_PeripheralTXControl(system_handles.pUSARTHandle, DISABLE);
     return ch;
 };

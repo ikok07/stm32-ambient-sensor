@@ -36,7 +36,7 @@ void ConfigureI2C_GPIOS() {
 I2C_Error_e InitI2C() {
     I2C_Config_t config = {
         .I2C_DeviceAddressLen = I2C_DeviceAddr7Bits,
-        .I2C_SCLSpeed = I2C_SclSpeedSM,
+        .I2C_SCLSpeed = I2C_SclSpeedFM4K,
         .I2C_FMDutyCycle = I2C_FmDuty2
     };
 
